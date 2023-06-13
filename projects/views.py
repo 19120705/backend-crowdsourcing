@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 
 from .models import *
 from .serializers import *
@@ -6,15 +6,66 @@ from .serializers import *
 from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.contrib.auth.models import User
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+
 from rest_framework import status
 
 # Create your views here.
 
 
+class RegisterViewSet(viewsets.ViewSet):
+    def create(self, request):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            user = User.objects.create_user(
+                serializer.initial_data['username'],
+                serializer.initial_data['email'],
+            )
+            user.set_password(serializer.initial_data['password'])
+            user.save()
+            return Response({'status': 'User created'}, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Add custom claims
+        token['username'] = user.username
+        # ...
+
+        return token
+
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
+
+@api_view(['GET'])
+def getRoutes(request):
+    routes = [
+        '/api/token',
+        '/api/token/refresh',
+    ]
+    return Response(routes)
+
+
+
+@permission_classes([IsAuthenticated])
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.filter(active = True)
     serializer_class = ProjectSerializer
 
+
+@permission_classes([IsAuthenticated])
 class TagViewSet(viewsets.ModelViewSet):
     serializer_class = TagSerializer
     def get_queryset(self):
@@ -24,7 +75,7 @@ class TagViewSet(viewsets.ModelViewSet):
         return Tag.objects.all()
         
 
-
+@permission_classes([IsAuthenticated])
 class QuestionViewSet(viewsets.ModelViewSet):
     serializer_class = QuestionSerializer
     def get_queryset(self):
@@ -34,7 +85,7 @@ class QuestionViewSet(viewsets.ModelViewSet):
         else:
             return Question.objects.all()
 
-
+@permission_classes([IsAuthenticated])
 class DocumentViewSet(viewsets.ModelViewSet):
     serializer_class = DocumentSerializer
     def get_queryset(self):
@@ -43,7 +94,8 @@ class DocumentViewSet(viewsets.ModelViewSet):
             return Document.objects.filter(project=project)
         else:
             return Document.objects.all()
-
+        
+@permission_classes([IsAuthenticated])
 class TextPairViewSet(viewsets.ModelViewSet):
     serializer_class = TextPairSerializer
     def get_queryset(self):
@@ -53,7 +105,7 @@ class TextPairViewSet(viewsets.ModelViewSet):
         else:
             return Text_pair.objects.all()
 
-
+@permission_classes([IsAuthenticated])
 class ActionDocumentViewSet(viewsets.ModelViewSet):
     serializer_class = ActionDocumentSerializer
     def get_queryset(self):
@@ -63,6 +115,7 @@ class ActionDocumentViewSet(viewsets.ModelViewSet):
         else:
             return Action_Document.objects.all()
 
+@permission_classes([IsAuthenticated])
 class ActionQuestionViewSet(viewsets.ModelViewSet):
     serializer_class = ActionQuestionSerializer
     def get_queryset(self):
@@ -72,6 +125,7 @@ class ActionQuestionViewSet(viewsets.ModelViewSet):
         else:
             return Action_Question.objects.all()
 
+@permission_classes([IsAuthenticated])
 class ActionTextPairViewSet(viewsets.ModelViewSet):
     serializer_class = ActionTextPairSerializer
     def get_queryset(self):
@@ -82,6 +136,7 @@ class ActionTextPairViewSet(viewsets.ModelViewSet):
             return Action_TextPair.objects.all()
 
 
+@permission_classes([IsAuthenticated])
 # See all data(document, question, text_pair) in any project
 class CompositeView(APIView):
     def get(self, request):

@@ -1,5 +1,17 @@
+from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import Project, Tag, Document, Question, Text_pair, Action_Document, Action_Question, Action_TextPair
+
+
+
+
+
+class UserSerializer(serializers.Serializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'password', 'email')
+        extra_kwargs = {'password': {'write_only': True}, 'id': {'read_only':True}}
+    
 
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
@@ -65,6 +77,9 @@ class ActionTextPairSerializer(serializers.ModelSerializer):
     class Meta:
         model = Action_TextPair
         fields = ["id","text_pair","author", "project","tag"]
+
+
+
     # tags = TagSerializer(many = True)
     # def create(self, validated_data):
     #     # Get the tags data
