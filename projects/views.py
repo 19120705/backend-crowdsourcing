@@ -142,6 +142,11 @@ class CompositeView(APIView):
     def get(self, request):
         project = request.query_params.get('project')
 
+        projectModel = Project.objects.get(pk=project)
+        project_serializer = ProjectSerializer(projectModel)
+
+        tags = Tag.objects.filter(project=project)
+        tags_serializer = TagSerializer(tags, many=True)
 
         documents = Document.objects.filter(project=project)
         document_serializer = DocumentSerializer(documents, many=True)
@@ -153,9 +158,11 @@ class CompositeView(APIView):
         text_pair_serializer = TextPairSerializer(text_pairs, many=True)
 
         data = {
-            "documents": document_serializer.data,
-            "questions": question_serializer.data,
-            "text_pairs": text_pair_serializer.data,
+                "detail":project_serializer.data,
+                "tags": tags_serializer.data,
+                "documents": document_serializer.data,
+                "questions": question_serializer.data,
+                "text_pairs": text_pair_serializer.data,
         }
 
         return Response(data)

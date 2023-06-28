@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Project, Tag, Document, Question, Text_pair, Action_Document, Action_Question, Action_TextPair
+from .models import *
 
 
 
@@ -12,11 +12,25 @@ class UserSerializer(serializers.Serializer):
         fields = ('id', 'username', 'password', 'email')
         extra_kwargs = {'password': {'write_only': True}, 'id': {'read_only':True}}
     
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name']
+class Type_labelSerializer(serializers.ModelSerializer):
+    category = CategorySerializer()
+    class Meta:
+        model = Type_label
+        fields = ['id','name','category']
 
+class DocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = ["id","content","type_label", "project"]
 class ProjectSerializer(serializers.ModelSerializer):
+    category = CategorySerializer()
     class Meta:
         model = Project
-        fields = ["id", "subject", "description", "category", "created_at", "size" ,"author" ]
+        fields = ["id", "subject", "description", "category", "created_at", "size" ,"author"]
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -24,10 +38,7 @@ class TagSerializer(serializers.ModelSerializer):
         model = Tag
         fields = ["id", "name","project"]
 
-class DocumentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Document
-        fields = ["id","content","type_label", "project"]
+
 
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
